@@ -217,7 +217,7 @@ const ChatWidget = () => {
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className="fixed left-4 bottom-4 z-50 w-full sm:w-96 h-[600px] sm:h-[500px] max-w-none sm:max-w-sm transition-all duration-300">
+        <div className="fixed left-2 bottom-2 right-2 top-2 sm:left-4 sm:bottom-4 sm:right-auto sm:top-auto sm:w-96 sm:h-[500px] z-50 transition-all duration-300">
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 h-full flex flex-col overflow-hidden">
             
             {/* Header */}
@@ -226,7 +226,7 @@ const ChatWidget = () => {
                 <img 
                   src="https://wordpress.techrealm.online/images/97a08179-1527-41b3-b8ff-0f681c89e043.png" 
                   alt="DSM Logo" 
-                  className="w-6 h-6 md:w-8 md:h-8 object-contain bg-white rounded p-1"
+                  className="w-6 h-6 object-contain bg-white rounded p-1"
                 />
                 <div>
                   <h3 className="font-semibold text-sm">Digital Software Market AI</h3>
@@ -389,7 +389,7 @@ const ChatWidget = () => {
                       className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 rounded-2xl"
                     >
                       <Send size={16} />
-                    </Button>
+                    />
                   </div>
                 </div>
               </>
