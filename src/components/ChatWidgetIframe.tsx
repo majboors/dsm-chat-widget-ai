@@ -344,7 +344,7 @@ const ChatWidgetIframe = () => {
                                   ),
                                   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                                   ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
-                                  ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ol>,
+                                  ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
                                   li: ({ children }) => <li className="mb-1">{children}</li>,
                                 }}
                               >
