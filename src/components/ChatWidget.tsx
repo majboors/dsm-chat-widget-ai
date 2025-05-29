@@ -1,0 +1,337 @@
+
+import React, { useState, useRef, useEffect } from 'react';
+import { MessageCircle, X, Send, RotateCcw, Minimize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
+
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+}
+
+interface ChatInstance {
+  instance_id: string;
+  email: string;
+  software_name: string;
+  created_at: string;
+}
+
+const ChatWidget = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'form' | 'chat'>('form');
+  const [email, setEmail] = useState('');
+  const [softwareName, setSoftwareName] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatInstance, setChatInstance] = useState<ChatInstance | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const createChatInstance = async () => {
+    if (!email || !softwareName) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('https://chat.techrealm.pk/instance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          software_name: softwareName
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create chat instance');
+      }
+
+      const instance = await response.json();
+      setChatInstance(instance);
+      setCurrentStep('chat');
+      
+      // Add welcome message
+      const welcomeMessage: Message = {
+        id: Date.now().toString(),
+        content: `Hello! I'm here to help you with ${softwareName}. How can I assist you today?`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+      
+      toast.success('Chat started successfully!');
+    } catch (error) {
+      console.error('Error creating chat instance:', error);
+      toast.error('Failed to start chat. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || !chatInstance) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`https://chat.techrealm.pk/instance/${chatInstance.instance_id}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
+      
+      const botMessage: Message = {
+        id: data.response_id || Date.now().toString(),
+        content: data.answer,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetChat = () => {
+    setCurrentStep('form');
+    setEmail('');
+    setSoftwareName('');
+    setMessages([]);
+    setInputMessage('');
+    setChatInstance(null);
+    toast.success('Chat reset successfully');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (currentStep === 'form') {
+        createChatInstance();
+      } else {
+        sendMessage();
+      }
+    }
+  };
+
+  return (
+    <>
+      {/* Chat Widget Button */}
+      <div className="fixed left-4 bottom-4 z-50">
+        {!isOpen && (
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
+            <MessageCircle size={24} />
+          </Button>
+        )}
+      </div>
+
+      {/* Chat Widget */}
+      {isOpen && (
+        <div className={`fixed left-4 bottom-4 z-50 transition-all duration-300 ${
+          isMinimized ? 'w-80 h-16' : 'w-80 h-96 md:h-[500px]'
+        }`}>
+          <div className="bg-white rounded-lg shadow-2xl border border-gray-200 h-full flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="https://wordpress.techrealm.online/images/97a08179-1527-41b3-b8ff-0f681c89e043.png" 
+                  alt="DSM Logo" 
+                  className="w-8 h-8 object-contain bg-white rounded p-1"
+                />
+                <div>
+                  <h3 className="font-semibold text-sm">TechRealm Support</h3>
+                  <p className="text-xs text-blue-100">We're here to help!</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMinimized(!isMinimized)}
+                  className="text-white hover:bg-blue-600 p-1 h-8 w-8"
+                >
+                  <Minimize2 size={16} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-blue-600 p-1 h-8 w-8"
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Content */}
+            {!isMinimized && (
+              <>
+                {currentStep === 'form' ? (
+                  /* Initial Form */
+                  <div className="flex-1 p-4 space-y-4">
+                    <div className="text-center">
+                      <h4 className="font-semibold text-gray-800 mb-2">Welcome to TechRealm Support</h4>
+                      <p className="text-sm text-gray-600">Please provide your details to start chatting</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1 block">Email Address</label>
+                        <Input
+                          type="email"
+                          placeholder="your@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          className="text-sm"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 mb-1 block">Software Query</label>
+                        <Input
+                          placeholder="e.g., Microsoft Office, AutoCAD, etc."
+                          value={softwareName}
+                          onChange={(e) => setSoftwareName(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={createChatInstance}
+                      disabled={isLoading || !email || !softwareName}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                    >
+                      {isLoading ? 'Starting Chat...' : 'Start Chat'}
+                    </Button>
+                  </div>
+                ) : (
+                  /* Chat Interface */
+                  <>
+                    {/* Chat Header Info */}
+                    <div className="px-4 py-2 bg-gray-50 border-b flex justify-between items-center">
+                      <div className="text-xs text-gray-600">
+                        <span className="font-medium">{softwareName}</span> • {email}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetChat}
+                        className="text-gray-500 hover:text-gray-700 p-1 h-6"
+                      >
+                        <RotateCcw size={14} />
+                      </Button>
+                    </div>
+
+                    {/* Messages */}
+                    <ScrollArea className="flex-1 p-4">
+                      <div className="space-y-3">
+                        {messages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                                message.sender === 'user'
+                                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {message.content}
+                            </div>
+                          </div>
+                        ))}
+                        {isLoading && (
+                          <div className="flex justify-start">
+                            <div className="bg-gray-100 p-3 rounded-lg text-sm">
+                              <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+
+                    {/* Input */}
+                    <div className="p-4 border-t bg-white">
+                      <div className="flex gap-2">
+                        <Textarea
+                          placeholder="Type your message..."
+                          value={inputMessage}
+                          onChange={(e) => setInputMessage(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          className="flex-1 min-h-[40px] max-h-[80px] resize-none text-sm"
+                          rows={1}
+                        />
+                        <Button
+                          onClick={sendMessage}
+                          disabled={!inputMessage.trim() || isLoading}
+                          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3"
+                        >
+                          <Send size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default ChatWidget;
