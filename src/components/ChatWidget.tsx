@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, RotateCcw, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -389,7 +388,7 @@ const ChatWidget = () => {
                       className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-3 rounded-2xl"
                     >
                       <Send size={16} />
-                    />
+                    </Button>
                   </div>
                 </div>
               </>
