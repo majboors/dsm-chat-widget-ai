@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, RotateCcw, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -329,27 +328,28 @@ const ChatWidget = () => {
                               }`}
                             >
                               {message.sender === 'bot' ? (
-                                <ReactMarkdown
-                                  className="prose prose-sm max-w-none"
-                                  components={{
-                                    a: ({ href, children }) => (
-                                      <a 
-                                        href={href} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 underline"
-                                      >
-                                        {children}
-                                      </a>
-                                    ),
-                                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
-                                    ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
-                                    li: ({ children }) => <li className="mb-1">{children}</li>,
-                                  }}
-                                >
-                                  {message.content}
-                                </ReactMarkdown>
+                                <div className="prose prose-sm max-w-none">
+                                  <ReactMarkdown
+                                    components={{
+                                      a: ({ href, children }) => (
+                                        <a 
+                                          href={href} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:text-blue-800 underline"
+                                        >
+                                          {children}
+                                        </a>
+                                      ),
+                                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                      ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                                      ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                                      li: ({ children }) => <li className="mb-1">{children}</li>,
+                                    }}
+                                  >
+                                    {message.content}
+                                  </ReactMarkdown>
+                                </div>
                               ) : (
                                 message.content
                               )}
