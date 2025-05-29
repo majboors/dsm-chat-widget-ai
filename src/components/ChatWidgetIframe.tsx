@@ -56,7 +56,7 @@ const ChatWidgetIframe = () => {
     setIsInIframe(inIframe);
 
     if (inIframe) {
-      // Set iframe body styles for proper positioning
+      // Set iframe body styles for proper positioning - remove all margins
       document.body.style.position = 'relative';
       document.body.style.height = '100vh';
       document.body.style.margin = '0';
@@ -64,6 +64,8 @@ const ChatWidgetIframe = () => {
       document.body.style.overflow = 'hidden';
       document.documentElement.style.height = '100vh';
       document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.margin = '0';
+      document.documentElement.style.padding = '0';
     }
   }, []);
 
@@ -230,8 +232,8 @@ const ChatWidgetIframe = () => {
   const getPositioningClasses = () => {
     if (isInIframe) {
       return {
-        button: "absolute left-4 bottom-4 z-50",
-        widget: "absolute inset-2 z-50"
+        button: "absolute left-0 bottom-0 z-50",
+        widget: "absolute inset-0 z-50"
       };
     } else {
       return {
