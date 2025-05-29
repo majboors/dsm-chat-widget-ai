@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -21,6 +22,12 @@ interface ChatInstance {
   created_at: string;
 }
 
+interface SessionData {
+  email: string;
+  chatInstance: ChatInstance | null;
+  messages: Message[];
+}
+
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -33,6 +40,9 @@ const ChatWidget = () => {
   const [chatInstance, setChatInstance] = useState<ChatInstance | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Session storage key
+  const SESSION_KEY = 'chat-widget-session';
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -40,6 +50,39 @@ const ChatWidget = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load session data on component mount
+  useEffect(() => {
+    const savedSession = localStorage.getItem(SESSION_KEY);
+    if (savedSession) {
+      try {
+        const sessionData: SessionData = JSON.parse(savedSession);
+        setEmail(sessionData.email);
+        if (sessionData.chatInstance && sessionData.messages.length > 0) {
+          setChatInstance(sessionData.chatInstance);
+          setMessages(sessionData.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })));
+          setCurrentStep('chat');
+        }
+      } catch (error) {
+        console.error('Error loading session:', error);
+      }
+    }
+  }, []);
+
+  // Save session data whenever relevant state changes
+  useEffect(() => {
+    if (email) {
+      const sessionData: SessionData = {
+        email,
+        chatInstance,
+        messages
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+    }
+  }, [email, chatInstance, messages]);
 
   const createChatInstance = async () => {
     if (!email || !softwareName) {
@@ -135,11 +178,12 @@ const ChatWidget = () => {
 
   const resetChat = () => {
     setCurrentStep('form');
-    setEmail('');
     setSoftwareName('');
     setMessages([]);
     setInputMessage('');
     setChatInstance(null);
+    // Clear session data
+    localStorage.removeItem(SESSION_KEY);
     toast.success('Chat reset successfully');
   };
 
@@ -183,7 +227,7 @@ const ChatWidget = () => {
                   className="w-8 h-8 object-contain bg-white rounded p-1"
                 />
                 <div>
-                  <h3 className="font-semibold text-sm">TechRealm Support</h3>
+                  <h3 className="font-semibold text-sm">Digital Software Market AI</h3>
                   <p className="text-xs text-blue-100">We're here to help!</p>
                 </div>
               </div>
@@ -214,7 +258,7 @@ const ChatWidget = () => {
                   /* Initial Form */
                   <div className="flex-1 p-4 space-y-4">
                     <div className="text-center">
-                      <h4 className="font-semibold text-gray-800 mb-2">Welcome to TechRealm Support</h4>
+                      <h4 className="font-semibold text-gray-800 mb-2">Welcome to Digital Software Market AI</h4>
                       <p className="text-sm text-gray-600">Please provide your details to start chatting</p>
                     </div>
                     
@@ -284,7 +328,31 @@ const ChatWidget = () => {
                                   : 'bg-gray-100 text-gray-800'
                               }`}
                             >
-                              {message.content}
+                              {message.sender === 'bot' ? (
+                                <ReactMarkdown
+                                  className="prose prose-sm max-w-none"
+                                  components={{
+                                    a: ({ href, children }) => (
+                                      <a 
+                                        href={href} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 underline"
+                                      >
+                                        {children}
+                                      </a>
+                                    ),
+                                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-2">{children}</ol>,
+                                    ul: ({ children }) => <ul className="list-disc list-inside mb-2">{children}</ul>,
+                                    li: ({ children }) => <li className="mb-1">{children}</li>,
+                                  }}
+                                >
+                                  {message.content}
+                                </ReactMarkdown>
+                              ) : (
+                                message.content
+                              )}
                             </div>
                           </div>
                         ))}
