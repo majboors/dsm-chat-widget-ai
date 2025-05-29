@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, RotateCcw, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,10 +36,36 @@ const ChatWidgetIframe = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatInstance, setChatInstance] = useState<ChatInstance | null>(null);
+  const [isInIframe, setIsInIframe] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Use the same session storage key as the main widget
   const SESSION_KEY = 'chat-widget-session';
+
+  // Detect if running in iframe and set up iframe styles
+  useEffect(() => {
+    const checkIfInIframe = () => {
+      try {
+        return window !== window.parent;
+      } catch (e) {
+        return true; // If we can't access parent, assume we're in iframe
+      }
+    };
+
+    const inIframe = checkIfInIframe();
+    setIsInIframe(inIframe);
+
+    if (inIframe) {
+      // Set iframe body styles for proper positioning
+      document.body.style.position = 'relative';
+      document.body.style.height = '100vh';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.height = '100vh';
+      document.documentElement.style.overflow = 'hidden';
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -201,10 +226,27 @@ const ChatWidgetIframe = () => {
     setIsOpen(false);
   };
 
+  // Get positioning classes based on iframe context
+  const getPositioningClasses = () => {
+    if (isInIframe) {
+      return {
+        button: "absolute left-4 bottom-4 z-50",
+        widget: "absolute inset-2 z-50"
+      };
+    } else {
+      return {
+        button: "fixed left-4 bottom-4 z-50",
+        widget: "fixed left-2 bottom-2 right-2 top-2 sm:left-4 sm:bottom-4 sm:right-auto sm:top-auto sm:w-96 sm:h-[500px] z-50"
+      };
+    }
+  };
+
+  const positionClasses = getPositioningClasses();
+
   return (
     <>
       {/* Chat Widget Button */}
-      <div className="fixed left-4 bottom-4 z-50">
+      <div className={positionClasses.button}>
         {!isOpen && (
           <Button
             onClick={() => setIsOpen(true)}
@@ -217,7 +259,7 @@ const ChatWidgetIframe = () => {
 
       {/* Chat Widget */}
       {isOpen && (
-        <div className="fixed left-2 bottom-2 right-2 top-2 sm:left-4 sm:bottom-4 sm:right-auto sm:top-auto sm:w-96 sm:h-[500px] z-50 transition-all duration-300">
+        <div className={`${positionClasses.widget} transition-all duration-300`}>
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 h-full flex flex-col overflow-hidden">
             
             {/* Header */}
